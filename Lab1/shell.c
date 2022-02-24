@@ -67,30 +67,29 @@ char **split_input_line(char *input_line) {
     return tokens;
 }
 
-char **split_input_commands(char *input_line) {
-  int buffer_size = 128, index = 0, inputSize;
-  char **tokens = safeMalloc(buffer_size * sizeof(char));
-  char *token;
+// char **split_input_commands(char *input_line) {
+//   int buffer_size = 128, index = 0, inputSize, j = 0, buffer_size_token = 128;
+//   char **tokens = safeMalloc(buffer_size * sizeof(char));
+//   char *token;
  
-  inputSize =  = strlen(input_line);
-  for(int i = 0; i < inputSize; i++) {
+//   inputSize = strlen(input_line);
+//   for(int i = 0; i < inputSize; i++) {
     
-  // echo 9 && echo a
-    if (input_line[i] != '&' || input_line[i] != '|' || input_line[i] != ';' || input_line[i] != '\n') {
-      token[j] = input_line[i];
-      j++;
-    }
+//   // echo 9 && echo a
+//     if (input_line[i] != '&' || input_line[i] != '|' || input_line[i] != ';' || input_line[i] != '\n') {
+//       token[j] = input_line[i];
+//       j++;
+//     }
+//     i++;
+//     if (input_line[i] == '&' || input_line[i] == '|' || input_line[i] == ';' || input_line[i] == '\n') {
+//       token[j] = '\0';
+//       tokens[index] = token;
+//       j = 0;
+//       index++;
+//     }
+//   }
 
-    i++;
-
-    if (input_line[i] == '&' || input_line[i] == '|' || input_line[i] == ';' || input_line[i] == '\n') {
-
-      token[j] = '\0';
-      tokens[index] = token;
-      j = 0;
-    }
-  }
-}
+// }
 
 char *read_line() {
   int buffer_size = 1024, index = 0;
@@ -132,12 +131,12 @@ void shell_loop() {
         getenv("PATH");
         printf("> ");
         input_line = read_line();
-        //args = split_input_line(input_line);
-        //status = shell_exec(args);
+        args = split_input_line(input_line);
+        status = shell_exec(args);
         printf("%s\n", input_line); //Debug to see the current input line
         //printf("%s %s %s\n", args[0], args[1], args[2]);// Debug to see args
         free(input_line);
-        //free(args);
+        free(args);
     } while (status);
 
 }
