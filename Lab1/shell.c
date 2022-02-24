@@ -8,7 +8,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#define chain_delimiter "||;&&"
 #define token_delimiter " \t\r\n\a"
+#define command_delimiter " \""
+
 
 void *safeMalloc(int sz) {
   void *p = calloc(sz, 1);
@@ -44,12 +47,12 @@ int shell_exec(char **args) {
     return 1;
 }
 
-char **split_input_line(char *input_line) {
+char **split_input_line(char *input_line, char *delimiter) {
     int buffer_size = 128, index = 0;
     char **tokens = safeMalloc(buffer_size * sizeof(char));
     char *token;
 
-    token = strtok(input_line, token_delimiter);
+    token = strtok(input_line, delimiter);
 
     while(token != NULL) {
         tokens[index] = token;
@@ -61,35 +64,11 @@ char **split_input_line(char *input_line) {
                 exit(EXIT_FAILURE);
             }
         }
-        token = strtok(NULL, token_delimiter);
+        token = strtok(NULL, delimiter);
     }
     tokens[index] = NULL;
     return tokens;
 }
-
-// char **split_input_commands(char *input_line) {
-//   int buffer_size = 128, index = 0, inputSize, j = 0, buffer_size_token = 128;
-//   char **tokens = safeMalloc(buffer_size * sizeof(char));
-//   char *token;
- 
-//   inputSize = strlen(input_line);
-//   for(int i = 0; i < inputSize; i++) {
-    
-//   // echo 9 && echo a
-//     if (input_line[i] != '&' || input_line[i] != '|' || input_line[i] != ';' || input_line[i] != '\n') {
-//       token[j] = input_line[i];
-//       j++;
-//     }
-//     i++;
-//     if (input_line[i] == '&' || input_line[i] == '|' || input_line[i] == ';' || input_line[i] == '\n') {
-//       token[j] = '\0';
-//       tokens[index] = token;
-//       j = 0;
-//       index++;
-//     }
-//   }
-
-// }
 
 char *read_line() {
   int buffer_size = 1024, index = 0;
@@ -121,20 +100,69 @@ char *read_line() {
   }
 }
 
+char **getOperators(char **args) {
+    int buffer_size = 128, index = 0, i = 0;
+    char **operators = safeMalloc(buffer_size * sizeof(char));
+    while(args[index] != NULL) {
+      if(strcmp(args[index], "&&") == 0) {
+        operators[i] = "&&";
+        i++;
+      }
+      if(strcmp(args[index], "||") == 0) {
+        operators[i] = "||";
+        i++;
+      }
+      if(strchr(args[index], ';') != NULL) {
+        operators[i] = ";";
+        i++;
+      }
+      index++;
+    }
+    operators[index] = NULL;
+    return operators;
+}
+
 void shell_loop() {
 
-    char *input_line;
+    char *input_line, *input_cpy;
     char **args;
+    char **operators;
+    char **chains;
+    char **command;
     int status = 1;
-
+    int i = 0;
     do {
         getenv("PATH");
         printf("> ");
         input_line = read_line();
-        args = split_input_line(input_line);
-        status = shell_exec(args);
-        printf("%s\n", input_line); //Debug to see the current input line
-        //printf("%s %s %s\n", args[0], args[1], args[2]);// Debug to see args
+        input_cpy = safeMalloc(strlen(input_line) * sizeof(char));
+        strcpy(input_cpy, input_line);
+        args = split_input_line(input_line,token_delimiter);
+        chains = split_input_line(input_cpy, chain_delimiter);
+        operators = getOperators(args);
+
+        while(chains[i] != NULL) {
+          //printf("%s\n", chains[i]);
+          command = split_input_line(chains[i], command_delimiter);
+          //printf("%s, \n",command[i]);
+          status = shell_exec(command);
+          free(command);
+          i++;
+        }
+        i = 0;
+        //printf("%s\n", input_line); //Debug to see the current input line
+        // while(command[i] != NULL) {
+        //   printf("%s, ", command[i]);// Debug to see args
+        //   i++;
+        // }
+        // i = 0;
+        // while(operators[i] != NULL) {
+        //   printf("%s, ", operators[i]);// Debug to see args
+        //   i++;
+        // }
+        free(input_cpy);
+        free(chains);
+        free(operators);
         free(input_line);
         free(args);
     } while (status);
