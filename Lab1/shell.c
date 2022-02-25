@@ -9,10 +9,11 @@
 #include <string.h>
 
 #define chain_delimiter "||;&&"
-#define token_delimiter " \t\r\n\a"
+#define token_delimiter " \t\a\n\r"
 #define command_delimiter " \""
 
 
+// Function to safely allocate memory
 void *safeMalloc(int sz) {
   void *p = calloc(sz, 1);
   if (p == NULL) {
@@ -22,31 +23,39 @@ void *safeMalloc(int sz) {
   return p;
 }
 
-int exit_shell(char **args) {
-  return 0;
-}
-
-int shell_exec(char **args) {
-    pid_t child_pid;
+// Function that executes the UNIX commands input by the user
+int shell_exec(char **args, char **operators) {
+    pid_t child_pid, w;
     int status;
+    
+    //Handling the exit command
+    if (strcmp(args[0],"exit") == 0) exit(EXIT_SUCCESS);
 
+    //Creating a child process
     child_pid = fork();
-
     if (args[0] == NULL) return 1;
 
     if (child_pid == 0) {
         if (execvp(args[0], args) < 0) {
-            printf("Command not found");
+            printf("Error: command not found!\n");
         }
         exit(EXIT_FAILURE);
     } else if (child_pid < 0) {
         printf("Forking failed");
     } else {
-        waitpid(child_pid, &status, WUNTRACED);
+        // Parent process waiting for the child process to finish.
+        do {
+          w = waitpid(child_pid, &status, WUNTRACED);
+          if (w == -1) {
+            perror("waitpid");
+            exit(EXIT_FAILURE);
+          }
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
-    return 1;
+    return 0;
 }
 
+//Parsing function to split the first input line into tokens
 char **split_input_line(char *input_line, char *delimiter) {
     int buffer_size = 128, index = 0;
     char **tokens = safeMalloc(buffer_size * sizeof(char));
@@ -70,6 +79,7 @@ char **split_input_line(char *input_line, char *delimiter) {
     return tokens;
 }
 
+//Function used to read the input line given by the user.
 char *read_line() {
   int buffer_size = 1024, index = 0;
   char *buffer = safeMalloc(buffer_size * sizeof(char));
@@ -100,6 +110,7 @@ char *read_line() {
   }
 }
 
+// Parsing function to exctrat all the operators such as || && ; from the input line into separate array
 char **getOperators(char **args) {
     int buffer_size = 128, index = 0, i = 0;
     char **operators = safeMalloc(buffer_size * sizeof(char));
@@ -122,50 +133,37 @@ char **getOperators(char **args) {
     return operators;
 }
 
+// Function with the main loop of the shell
 void shell_loop() {
-
     char *input_line, *input_cpy;
-    char **args;
-    char **operators;
-    char **chains;
-    char **command;
-    int status = 1;
-    int i = 0;
+    char **args, **operators, **chains, **command;
+    int status = 1, i = 0;
+
     do {
-        getenv("PATH");
-        printf("> ");
         input_line = read_line();
-        input_cpy = safeMalloc(strlen(input_line) * sizeof(char));
+        input_cpy = safeMalloc((strlen(input_line) + 1) * sizeof(char));
         strcpy(input_cpy, input_line);
+        
+        //Parsing section
         args = split_input_line(input_line,token_delimiter);
         chains = split_input_line(input_cpy, chain_delimiter);
         operators = getOperators(args);
 
         while(chains[i] != NULL) {
-          //printf("%s\n", chains[i]);
           command = split_input_line(chains[i], command_delimiter);
-          //printf("%s, \n",command[i]);
-          status = shell_exec(command);
+          status = shell_exec(command, operators);
           free(command);
           i++;
         }
         i = 0;
-        //printf("%s\n", input_line); //Debug to see the current input line
-        // while(command[i] != NULL) {
-        //   printf("%s, ", command[i]);// Debug to see args
-        //   i++;
-        // }
-        // i = 0;
-        // while(operators[i] != NULL) {
-        //   printf("%s, ", operators[i]);// Debug to see args
-        //   i++;
-        // }
+
+        //Freeing section
         free(input_cpy);
         free(chains);
         free(operators);
         free(input_line);
         free(args);
-    } while (status);
+    } while (!status);
 
 }
 
