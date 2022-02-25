@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define chain_delimiter "||;&&"
 #define token_delimiter " \t\a\n\r"
@@ -21,38 +22,6 @@ void *safeMalloc(int sz) {
     exit(EXIT_FAILURE);
   }
   return p;
-}
-
-// Function that executes the UNIX commands input by the user
-int shell_exec(char **args, char **operators) {
-    pid_t child_pid, w;
-    int status;
-    
-    //Handling the exit command
-    if (strcmp(args[0],"exit") == 0) exit(EXIT_SUCCESS);
-
-    //Creating a child process
-    child_pid = fork();
-    if (args[0] == NULL) return 1;
-
-    if (child_pid == 0) {
-        if (execvp(args[0], args) < 0) {
-            printf("Error: command not found!\n");
-        }
-        exit(EXIT_FAILURE);
-    } else if (child_pid < 0) {
-        printf("Forking failed");
-    } else {
-        // Parent process waiting for the child process to finish.
-        do {
-          w = waitpid(child_pid, &status, WUNTRACED);
-          if (w == -1) {
-            perror("waitpid");
-            exit(EXIT_FAILURE);
-          }
-        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-    }
-    return 0;
 }
 
 //Parsing function to split the first input line into tokens
@@ -77,6 +46,66 @@ char **split_input_line(char *input_line, char *delimiter) {
     }
     tokens[index] = NULL;
     return tokens;
+}
+
+// Function that executes the UNIX commands input by the user
+int shell_exec(char **chains, char **operators) {
+    pid_t child_pid, w;
+    int status;
+    int commandIndex = 0, operatorIndex = 0;
+    char **command;
+
+    while (chains[commandIndex] != NULL) {
+      bool isCorrectOperator = true;
+      command = split_input_line(chains[commandIndex], command_delimiter);
+
+      if (strcmp(operators[operatorIndex],";") == 0 && commandIndex != 0) {
+        operatorIndex++;
+      }
+      if (strcmp(operators[operatorIndex],"||") == 0 && commandIndex != 0) {
+        if (WEXITSTATUS(status) == 0) {
+          isCorrectOperator = false;
+        }
+        operatorIndex++;
+      }
+      if (strcmp(operators[operatorIndex],"&&") == 0 && commandIndex != 0) {
+        if (WEXITSTATUS(status) != 0) {
+          isCorrectOperator = false;
+        }
+        operatorIndex++;
+      }
+
+      if (isCorrectOperator == false) {
+        free(command);
+        continue;
+      }
+    }
+    
+    //Handling the exit command
+    if (strcmp(command[0],"exit") == 0) exit(EXIT_SUCCESS);
+
+    //Creating a child process
+    child_pid = fork();
+    if (command[0] == NULL) return 1;
+
+    if (child_pid == 0) {
+        if (execvp(command[0], command) < 0) {
+            printf("Error: command not found!\n");
+        }
+        exit(EXIT_FAILURE);
+    } else if (child_pid < 0) {
+        printf("Forking failed");
+    } else {
+        // Parent process waiting for the child process to finish.
+        do {
+          w = waitpid(child_pid, &status, WUNTRACED);
+          if (w == -1) {
+            perror("waitpid");
+            exit(EXIT_FAILURE);
+          }
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
+    return 0;
 }
 
 //Function used to read the input line given by the user.
@@ -148,14 +177,15 @@ void shell_loop() {
         args = split_input_line(input_line,token_delimiter);
         chains = split_input_line(input_cpy, chain_delimiter);
         operators = getOperators(args);
+        status = shell_exec(chains, operators);
 
-        while(chains[i] != NULL) {
-          command = split_input_line(chains[i], command_delimiter);
-          status = shell_exec(command, operators);
-          free(command);
-          i++;
-        }
-        i = 0;
+        // while(chains[i] != NULL) {
+        //   command = split_input_line(chains[i], command_delimiter);
+        //   status = shell_exec(command, operators);
+        //   free(command);
+        //   i++;
+        // }
+        // i = 0;
 
         //Freeing section
         free(input_cpy);
