@@ -35,6 +35,8 @@ char **split_input_line(char *input_line, char *delimiter) {
     while(token != NULL) {
         tokens[index] = token;
         index++;
+
+        //Reallocing memory for larger inputs than 128 chars 
         if (buffer_size <= index) {
             buffer_size += 128;
             tokens = realloc(tokens, buffer_size * sizeof(char*));
@@ -44,7 +46,7 @@ char **split_input_line(char *input_line, char *delimiter) {
         }
         token = strtok(NULL, delimiter);
     }
-    //free(token);
+
     tokens[index] = NULL;
     return tokens;
 }
@@ -110,21 +112,16 @@ int shell_exec(char **chains, char **operators) {
   int commandIndex = 0, operatorIndex = 0;
   char **command;
 
-  //int i = 0;
-  // while (operators[i] != NULL)
-  // {
-  //   printf("%s\n", operators[i]);
-  //   i++;
-  // }
-  
-
+  //Looping over all stored chains
   while (chains[commandIndex] != NULL ) {
 
     bool isCorrectOperator = true;
 
+    //Setting the chain in the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
-    //printf("%s %s %s\n",  command[1], command[2], command[3]);
 
+    //Checking the operator starting with the 2nd chain and taking into 
+    //consideration the exit code of the previous command
     if (operators[operatorIndex] != NULL) {
       if (strcmp(operators[operatorIndex], ";") == 0 && commandIndex != 0) {
         operatorIndex++;
@@ -140,15 +137,13 @@ int shell_exec(char **chains, char **operators) {
         operatorIndex++;
       }
     }
-
-    //printf("operatorindex = %d, iscorrect = %d\n", operatorIndex, isCorrectOperator);
     commandIndex++;
 
 
-    if (isCorrectOperator == false) {
-      free(command);
-      continue;
-    }
+  if (isCorrectOperator == false) {
+    free(command);
+    continue;
+  }
     
     //Handling the exit command
     if (strcmp(command[0],"exit") == 0) {
@@ -161,6 +156,7 @@ int shell_exec(char **chains, char **operators) {
     if (command[0] == NULL) return 1;
 
     if (child_pid == 0) {
+      //Command execution
       if (execvp(command[0], command) < 0) {
         printf("Error: command not found!\n");
       }
@@ -180,7 +176,6 @@ int shell_exec(char **chains, char **operators) {
     free(command);
   }
   
-  //printf("am iesit\n");
   return 0;
 }
 
@@ -200,7 +195,6 @@ void shell_loop() {
     operators = getOperators(args);
 
     status = shell_exec(chains, operators);
-    //status = 1;
 
     //Freeing section
     free(input_line);
@@ -210,11 +204,6 @@ void shell_loop() {
     free(operators);
 
   } while (!status);
-    // free(input_cpy);
-    // free(chains);
-    // free(input_line);
-    // free(args);
-    // free(operators);
 }
 
 int main(int argc, char **argv) {
