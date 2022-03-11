@@ -5,6 +5,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+typedef struct Node {
+   int index;
+   struct Node *next;
+} Node;
+
+//typedef Node* node;
+
+typedef struct Queue {
+   Node *first;
+   Node *last;
+} Queue;
+
+//typedef queue_t* queue;
+
 // Function to safely allocate memory
 void *safeMalloc(int sz) {
   void *p = calloc(sz, 1);
@@ -13,6 +27,54 @@ void *safeMalloc(int sz) {
     exit(EXIT_FAILURE);
   }
   return p;
+}
+
+Node* makeNewNode(int num) {
+   Node *n;
+   n = safeMalloc(sizeof(Node));
+   n->index = num;
+   n->next = NULL;
+   return n;
+}
+
+Queue* makeNewQueue() {
+   Queue *q;
+   q = safeMalloc(sizeof(Queue));
+   q->first = NULL;
+   q->last = NULL;
+   return q;
+}
+
+void enqueueNode(Queue *q , int num) {
+   Node *n = makeNewNode(num);
+   if (q->first == NULL) {
+      q->first = n;
+      q->last = n;
+   } else {
+      q->last->next = n;
+      q->last = q->last->next;
+   }
+}
+
+Node* dequeueNode(Queue *q) {
+   Node *aux;
+   Node *n;
+   if (q->first != NULL) {
+      aux = q->first;
+      q->first = q->first->next;
+      n = aux;
+      free(aux);
+   }
+   return n;
+}
+
+void freeQueue(Queue *q) {
+   Node *n;
+   while(q->first != NULL) {
+      n = dequeueNode(q);
+      printf("%d\n", n->index);
+   }
+   free(q);
 }
 
 //Function used to read the input line given by the user.
@@ -51,32 +113,44 @@ int *read_process(int *isEOF) {
   }
 }
 
-void freeArr(int **arr) {
-  for(int i = 0; i < 1024; i++) {
-    free(arr[i]);
-  }
+void freeArr(int **arr, int size) {
+   for(int i = 0; i < size; i++) {
+      free(arr[i]);
+   }
+   free(arr);
 }
 
 int main(int argc, char **argv) {
-  int *process, **processArr;
-  int isEOF = 0, index = 0, buffer_size = 1024;
+   int *process, **processArr;
+   int isEOF = 0, processNr = 0, buffer_size = 1024;
 
-  processArr = safeMalloc(buffer_size * sizeof(int));
+   processArr = safeMalloc(buffer_size * sizeof(int));
 
-  while(!isEOF) { 
-    process = read_process(&isEOF);
-    processArr[index] = process;
-    index++;
-    //printf("isEOF = %d\n", isEOF);
+   Queue *q = makeNewQueue();
 
-    // while(process[i] != -1){
-    //   printf("%d, ", process[i]);
-    //   i++;
-    // }
-    // printf("\n");
-    // i = 0;
+   while(!isEOF) { 
+      process = read_process(&isEOF);
+      processArr[processNr] = process;
+      
+      // //print test
+      // int i = 0;
+      // do {
+      //    printf("%d, ", processArr[processNr][i]);
+      //    i++;
+      // } while (processArr[processNr][i] != -1);
+      // printf("\n");
+      // i = 0;
 
-  }
-  freeArr(processArr);
-  return 0;
+      processNr++;
+   }
+   
+   enqueueNode(q,1); 
+   enqueueNode(q,2); 
+   enqueueNode(q,3); 
+   enqueueNode(q,4); 
+   dequeueNode(q);
+
+   freeArr(processArr, processNr);
+   freeQueue(q);
+   return 0;
 }
