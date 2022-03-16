@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <fcntl.h>
 
-#define chain_delimiter "||;&&<>"
+#define chain_delimiter "||;&&"
 #define token_delimiter " \t\a\r"
 #define command_delimiter " \""
 
@@ -166,9 +166,34 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
 
     //Setting the chain input the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
+
+    // int i = 0;
+    // while (command[i] != NULL)
+    // {
+    //   printf("command[%d] = %s\n", i, command[i]);
+    //   i++;
+    // }
+    // printf("________________________\n");
+
+    while (command[commandIndex] != NULL) {
+      if (strcmp(command[commandIndex], "<") == 0 || strcmp(command[commandIndex], ">") == 0) {
+        command[commandIndex] = NULL;
+      }
+      commandIndex++;
+    }
+    commandIndex = 0;
+
+    // i = 0;
+    // while (command[i] != NULL)
+    // {
+    //   printf("command[%d] = %s\n", i, command[i]);
+    //   i++;
+    // }
+
     // for (int i = 0; i < 10; i++) {
     //   printf("%s \n", command[i]);
     // }
+    // printf("____________________\n");
 
     //Checking the operator starting with the 2nd chain and taking into 
     //consideration the exit code of the previous command
@@ -190,10 +215,10 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     commandIndex++;
 
 
-  if (isCorrectOperator == false) {
-    free(command);
-    continue;
-  }
+    if (isCorrectOperator == false) {
+      free(command);
+      continue;
+    }
     
     //Handling the exit command
     if (strcmp(command[0], "exit") == 0) {
@@ -230,8 +255,8 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
         close(fd0);
         operatorIndex++;
       } else if (strcmp(operators[operatorIndex], ">") == 0 && commandIndex != 0) {
-        int fd1 ;
-        if ((fd1 = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0600) < 0)) {
+        int fd1 = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+        if ((fd1 < 0)) {
             perror("Couldn't open the output file\n");
             exit(0);
         }           
@@ -282,8 +307,10 @@ void shell_loop() {
     chains = split_input_line(input_cpy, chain_delimiter);
     operators = getOperators(args, &input_file, &output_file);
     printf(" IN %s OUT %s\n", input_file, output_file);
-    // for (int i = 0; i < 10; i++) {
-    //   printf("%s \n", operators[i]);
+    // int i = 0;
+    // while(chains[i] != NULL) {
+    //   printf("chain[%d] = %s\n", i, chains[i]);
+    //   i++;
     // }
 
     status = shell_exec(chains, operators, input_file, output_file);
