@@ -112,6 +112,33 @@ char **getOperators(char **args) {
     return operators;
 }
 
+void changeDir(char **command) {
+  char str[100];
+  int returnValue;
+  if (command[1] == NULL) {
+    printf("Error: cd requires folder to navigate to!\n");
+    return;
+  }
+  // printf("%s\n", getcwd(str, 100));
+  int i = 1;
+
+  while (command[i] != NULL) {
+    strcat(str, command[i]);
+    if (command[2] != NULL)
+      strcat(str, " ");
+    i++;
+  }
+  // strcpy(str, "'radu radu'");
+
+  printf("%s\n", str);
+
+  returnValue = chdir(str);
+  if (returnValue == -1) {
+    printf("Error: cd directory not found!\n");
+  }
+  // printf("%s\n", getcwd(str, 100));
+}
+
 // Function that executes the UNIX commands input by the user
 int shell_exec(char **chains, char **operators) {
   pid_t child_pid, w;
@@ -130,11 +157,7 @@ int shell_exec(char **chains, char **operators) {
     //Checking the operator starting with the 2nd chain and taking into 
     //consideration the exit code of the previous command
     if (operators[operatorIndex] != NULL) {
-<<<<<<< HEAD
       if ((strcmp(operators[operatorIndex], ";") == 0 || strcmp(operators[operatorIndex],"\n") == 0) && commandIndex != 0) {
-=======
-      if (strcmp(operators[operatorIndex], ";") == 0 && commandIndex != 0) {
->>>>>>> 4d4f1bdc5bb0e6c1dd6d3e7a5cca0579c23550d3
         operatorIndex++;
       } else if (strcmp(operators[operatorIndex], "||") == 0 && commandIndex != 0) {
         if (WEXITSTATUS(status) == 0) {
@@ -157,9 +180,15 @@ int shell_exec(char **chains, char **operators) {
   }
     
     //Handling the exit command
-    if (strcmp(command[0],"exit") == 0) {
+    if (strcmp(command[0], "exit") == 0) {
       free(command);
       return(1);
+    }
+
+    //Handling the cd command
+    if(strcmp(command[0], "cd") == 0) {
+      changeDir(command);
+      return(0);
     }
 
     //Creating a child process
@@ -195,11 +224,8 @@ void shell_loop() {
   char *input_line, *input_cpy;
   char **args, **operators, **chains;
   int status = 1;
-<<<<<<< HEAD
 
   // Loop to do input reading, parsing and command executing
-=======
->>>>>>> 4d4f1bdc5bb0e6c1dd6d3e7a5cca0579c23550d3
   do {
     input_line = read_line();
     input_cpy = safeMalloc((strlen(input_line) + 1) * sizeof(char));
