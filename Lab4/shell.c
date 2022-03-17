@@ -161,6 +161,14 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //Setting the chain input the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
 
+          // int j = 0;
+      // while (command[j] != NULL)
+      // {
+      //   printf("command[%d] = %s\n", j, command[j]);
+      //   j++;
+      // }
+
+
     if (input_file != NULL && output_file != NULL) {
       // Check if input and output files are not equal.
       if (strcmp(input_file, output_file) == 0) {
@@ -174,16 +182,8 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
       if (strcmp(command[i], "<") == 0 || strcmp(command[i], ">") == 0) {
         command[i] = NULL;
       }
-      //printf("command[%d] = %s\n", i, command[i]);
       i++;
     }
-    
-    // int i = 0;
-    // while (command[i] != NULL)
-    // {
-    //   printf("command[%d] = %s\n", i, command[i]);
-    //   i++;
-    // }
 
     //Checking the operator starting with the 2nd chain and taking into 
     //consideration the exit code of the previous command
@@ -218,6 +218,7 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //Handling the cd command
     if(strcmp(command[0], "cd") == 0) {
       changeDir(command);
+      commandIndex++;
       free(command);
       return(0);
     }
@@ -229,35 +230,38 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     if (child_pid == 0) {
 
       if (input_file != NULL || output_file != NULL) {
-      if (strcmp(operators[operatorIndex], "<") == 0 && commandIndex != 0) {
-        int fd0;
-        if ((fd0 = open(input_file, O_RDONLY, 0)) < 0) {
-          printf("Couldn't open input file\n");
+        if (strcmp(operators[operatorIndex], "<") == 0 && commandIndex != 0) {
+          int fd0;
+          if ((fd0 = open(input_file, O_RDONLY, 0)) < 0) {
+            printf("Couldn't open input file\n");
             exit(0);
-        }           
-        dup2(fd0, STDIN_FILENO);
-        close(fd0);
-        operatorIndex++;
-      } else if (strcmp(operators[operatorIndex], ">") == 0 && commandIndex != 0) {
-        int fd1 = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0600);
-        if ((fd1 < 0)) {
-            perror("Couldn't open the output file\n");
+          }           
+          dup2(fd0, STDIN_FILENO);
+          close(fd0);
+          operatorIndex++;
+        } else if (strcmp(operators[operatorIndex], ">") == 0 && commandIndex != 0) {
+          
+          int fd1 = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+          if ((fd1 < 0)) {
+            printf("Couldn't open the output file\n");
             exit(0);
-        }           
-        dup2(fd1, STDOUT_FILENO);
-        close(fd1);
-        operatorIndex++;
+          }           
+          dup2(fd1, STDOUT_FILENO); ///////problema
+          close(fd1);
+          operatorIndex++;
+        }
+        
       }
-      }
-
 
       //Command execution
       if (execvp(command[0], command) < 0) {
         printf("Error: command not found!\n");
       }
       exit(EXIT_FAILURE);
+
     } else if (child_pid < 0) {
       printf("Forking failed");
+
     } else {
       // Parent process waiting for the child process to finish.
       do {
@@ -301,6 +305,8 @@ void shell_loop() {
     status = shell_exec(chains, operators, input_file, output_file);
 
     //Freeing section
+    input_file = NULL;
+    output_file = NULL;
     free(input_line);
     free(input_cpy);
     free(chains);
