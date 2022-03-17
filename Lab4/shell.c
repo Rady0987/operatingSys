@@ -167,21 +167,20 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //Setting the chain input the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
 
-    // int i = 0;
-    // while (command[i] != NULL)
-    // {
-    //   printf("command[%d] = %s\n", i, command[i]);
-    //   i++;
-    // }
-    // printf("________________________\n");
-
-    while (command[commandIndex] != NULL) {
-      if (strcmp(command[commandIndex], "<") == 0 || strcmp(command[commandIndex], ">") == 0) {
-        command[commandIndex] = NULL;
+    int i = 0;
+    while (command[i] != NULL) {
+      if (strcmp(command[i], "<") == 0 || strcmp(command[i], ">") == 0) {
+        command[i] = NULL;
       }
-      commandIndex++;
+      //printf("command[%d] = %s\n", i, command[i]);
+      i++;
     }
-    commandIndex = 0;
+    //printf("________________________\n");
+
+    // if (strcmp(command[commandIndex], "<") == 0 || strcmp(command[commandIndex], ">") == 0) {
+    //   command[commandIndex] = NULL;
+    //   printf("SOSKA\n");
+    // }
 
     // i = 0;
     // while (command[i] != NULL)
@@ -189,11 +188,6 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //   printf("command[%d] = %s\n", i, command[i]);
     //   i++;
     // }
-
-    // for (int i = 0; i < 10; i++) {
-    //   printf("%s \n", command[i]);
-    // }
-    // printf("____________________\n");
 
     //Checking the operator starting with the 2nd chain and taking into 
     //consideration the exit code of the previous command
@@ -244,7 +238,7 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     if (command[0] == NULL) return 1;
 
     if (child_pid == 0) {
-
+      if (input_file != NULL || output_file != NULL) {
       if (strcmp(operators[operatorIndex], "<") == 0 && commandIndex != 0) {
         int fd0;
         if ((fd0 = open(input_file, O_RDONLY, 0)) < 0) {
@@ -263,6 +257,7 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
         dup2(fd1, STDOUT_FILENO);
         close(fd1);
         operatorIndex++;
+      }
       }
 
 
@@ -306,7 +301,7 @@ void shell_loop() {
     args = split_input_line(input_line, token_delimiter);
     chains = split_input_line(input_cpy, chain_delimiter);
     operators = getOperators(args, &input_file, &output_file);
-    printf(" IN %s OUT %s\n", input_file, output_file);
+    //printf(" IN %s OUT %s\n", input_file, output_file);
     // int i = 0;
     // while(chains[i] != NULL) {
     //   printf("chain[%d] = %s\n", i, chains[i]);
