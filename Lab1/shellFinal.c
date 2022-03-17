@@ -130,11 +130,7 @@ int shell_exec(char **chains, char **operators) {
     //Checking the operator starting with the 2nd chain and taking into 
     //consideration the exit code of the previous command
     if (operators[operatorIndex] != NULL) {
-<<<<<<< HEAD
       if ((strcmp(operators[operatorIndex], ";") == 0 || strcmp(operators[operatorIndex],"\n") == 0) && commandIndex != 0) {
-=======
-      if (strcmp(operators[operatorIndex], ";") == 0 && commandIndex != 0) {
->>>>>>> 4d4f1bdc5bb0e6c1dd6d3e7a5cca0579c23550d3
         operatorIndex++;
       } else if (strcmp(operators[operatorIndex], "||") == 0 && commandIndex != 0) {
         if (WEXITSTATUS(status) == 0) {
@@ -195,11 +191,8 @@ void shell_loop() {
   char *input_line, *input_cpy;
   char **args, **operators, **chains;
   int status = 1;
-<<<<<<< HEAD
 
   // Loop to do input reading, parsing and command executing
-=======
->>>>>>> 4d4f1bdc5bb0e6c1dd6d3e7a5cca0579c23550d3
   do {
     input_line = read_line();
     input_cpy = safeMalloc((strlen(input_line) + 1) * sizeof(char));

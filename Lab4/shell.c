@@ -134,8 +134,7 @@ void changeDir(char **command) {
   strcpy(str, command[1]);
 
   int i = 2;
-  while (command[i] != NULL)
-  {
+  while (command[i] != NULL) {
     strcat(str, " ");
     strcat(str, command[i]);
     i++;
@@ -162,26 +161,14 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //Setting the chain input the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
 
-    //Handling the exit command
-    if (strcmp(command[0], "exit") == 0) {
-      free(command);
-      return(1);
-    }
-
-    //Handling the cd command
-    if(strcmp(command[0], "cd") == 0) {
-      changeDir(command);
-      free(command);
-      return(0);
-    }
-
     if (input_file != NULL && output_file != NULL) {
       // Check if input and output files are not equal.
       if (strcmp(input_file, output_file) == 0) {
         printf("Error: input and output files cannot be equal!\n");
       }
+      return(0);
     }
-    
+
     int i = 0;
     while (command[i] != NULL) {
       if (strcmp(command[i], "<") == 0 || strcmp(command[i], ">") == 0) {
@@ -217,10 +204,22 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     }
     commandIndex++;
 
-
     if (isCorrectOperator == false) {
       free(command);
       continue;
+    }
+
+    //Handling the exit command
+    if (strcmp(command[0], "exit") == 0) {
+      free(command);
+      return(1);
+    }
+
+    //Handling the cd command
+    if(strcmp(command[0], "cd") == 0) {
+      changeDir(command);
+      free(command);
+      return(0);
     }
 
     //Creating a child process
