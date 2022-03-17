@@ -25,6 +25,21 @@ void *safeMalloc(int sz) {
   return p;
 }
 
+void createPipe(char **args, char **operators, char **input_file, char **output_file) {
+    int fd[2];
+    pipe(fd);
+
+    dup2(fd[1], 1);
+    close(fd[1]);
+
+    printf("args = %s\n", *args);
+
+    shell_exec(args, operators, input_file, output_file);
+
+    dup2(fd[0], 0);
+    close(fd[0]);
+}
+
 //Parsing function to split the first input line into tokens
 char **split_input_line(char *input_line, char *delimiter) {
     int buffer_size = 128, index = 0;
@@ -117,6 +132,10 @@ char **getOperators(char **args, char **input_file, char **output_file) {
         *input_file = args[index + 1];
         i++;
       }
+      if(strchr(args[index], '|') != NULL) {
+        operators[i] = "|";
+        i++;
+      }
       index++;
     }
     operators[index] = NULL;
@@ -161,12 +180,12 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //Setting the chain input the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
 
-          // int j = 0;
-      // while (command[j] != NULL)
-      // {
-      //   printf("command[%d] = %s\n", j, command[j]);
-      //   j++;
-      // }
+          int j = 0;
+      while (command[j] != NULL)
+      {
+        printf("command[%d] = %s\n", j, command[j]);
+        j++;
+      }
 
 
     if (input_file != NULL && output_file != NULL) {
@@ -250,7 +269,6 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
           close(fd1);
           operatorIndex++;
         }
-        
       }
 
       //Command execution
