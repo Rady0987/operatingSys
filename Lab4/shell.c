@@ -25,20 +25,20 @@ void *safeMalloc(int sz) {
   return p;
 }
 
-void createPipe(char **args, char **operators, char **input_file, char **output_file) {
-    int fd[2];
-    pipe(fd);
+// void createPipe(char **args, char **operators, char **input_file, char **output_file) {
+//     int fd[2];
+//     pipe(fd);
 
-    dup2(fd[1], 1);
-    close(fd[1]);
+//     dup2(fd[1], 1);
+//     close(fd[1]);
 
-    printf("args = %s\n", *args);
+//     printf("args = %s\n", *args);
 
-    shell_exec(args, operators, input_file, output_file);
+//     shell_exec(args, operators, input_file, output_file);
 
-    dup2(fd[0], 0);
-    close(fd[0]);
-}
+//     dup2(fd[0], 0);
+//     close(fd[0]);
+// }
 
 //Parsing function to split the first input line into tokens
 char **split_input_line(char *input_line, char *delimiter) {
@@ -142,14 +142,17 @@ char **getOperators(char **args, char **input_file, char **output_file) {
     return operators;
 }
 
-void changeDir(char **command) {
+void changeDir(char **command, int *status) {
+  //char s[100];
   char str[100];
   int returnValue;
   if (command[1] == NULL) {
     printf("Error: cd requires folder to navigate to!\n");
+    *status = 256;
     return;
   }
   
+  //printf("current = %s\n", getcwd(s, 100));
   strcpy(str, command[1]);
 
   int i = 2;
@@ -162,7 +165,12 @@ void changeDir(char **command) {
   returnValue = chdir(str);
   if (returnValue == -1) {
     printf("Error: cd directory not found!\n");
-  }
+    *status = 256;
+    return;
+  } 
+  *status = 0;
+
+  //printf("new = %s\n", getcwd(s, 100));
 }
 
 // Function that executes the UNIX commands input by the user
@@ -172,6 +180,12 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
   int commandIndex = 0, operatorIndex = 0;
   char **command;
 
+    // int j = 0;
+    // while (chains[j] != NULL){
+    //   printf("chains[%d] = %s\n", j, chains[j]);
+    //   j++;
+    // }
+
   //Looping over all stored chains
   while (chains[commandIndex] != NULL ) {
 
@@ -180,13 +194,13 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     //Setting the chain input the right format for execvp
     command = split_input_line(chains[commandIndex], command_delimiter);
 
-          int j = 0;
-      while (command[j] != NULL)
-      {
-        printf("command[%d] = %s\n", j, command[j]);
-        j++;
-      }
-
+      // j = 0;
+      // while (command[j] != NULL)
+      // {
+      //   printf("command[%d] = %s\n", j, command[j]);
+      //   j++;
+      // }
+      // printf("__________________\n");
 
     if (input_file != NULL && output_file != NULL) {
       // Check if input and output files are not equal.
@@ -210,11 +224,13 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
       if ((strcmp(operators[operatorIndex], ";") == 0 || strcmp(operators[operatorIndex],"\n") == 0) && commandIndex != 0) {
         operatorIndex++;
       } else if (strcmp(operators[operatorIndex], "||") == 0 && commandIndex != 0) {
+        //printf("status = %d\n", WEXITSTATUS(status));
         if (WEXITSTATUS(status) == 0) {
           isCorrectOperator = false;
         }
         operatorIndex++;
       } else if (strcmp(operators[operatorIndex], "&&") == 0 && commandIndex != 0) {
+        //printf("status = %d\n", WEXITSTATUS(status));
         if (WEXITSTATUS(status) != 0) {
           isCorrectOperator = false;
         }
@@ -236,10 +252,9 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
 
     //Handling the cd command
     if(strcmp(command[0], "cd") == 0) {
-      changeDir(command);
-      commandIndex++;
+      changeDir(command, &status);
       free(command);
-      return(0);
+      continue;
     }
 
     //Creating a child process
@@ -265,14 +280,14 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
             printf("Couldn't open the output file\n");
             exit(0);
           }           
-          dup2(fd1, STDOUT_FILENO); ///////problema
+          dup2(fd1, STDOUT_FILENO); 
           close(fd1);
           operatorIndex++;
         }
       }
-
       //Command execution
       if (execvp(command[0], command) < 0) {
+        
         printf("Error: command not found!\n");
       }
       exit(EXIT_FAILURE);
@@ -293,6 +308,7 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
     free(command);
   }
   
+  //printf("am iesit din exec\n");
   return 0;
 }
 
@@ -314,13 +330,28 @@ void shell_loop() {
     chains = split_input_line(input_cpy, chain_delimiter);
     operators = getOperators(args, &input_file, &output_file);
     //printf(" IN %s OUT %s\n", input_file, output_file);
+
     // int i = 0;
     // while(chains[i] != NULL) {
-    //   printf("chain[%d] = %s\n", i, chains[i]);
+    //   printf("chains[%d] = %s\n", i, chains[i]);
     //   i++;
     // }
 
-    status = shell_exec(chains, operators, input_file, output_file);
+    // int j = 0;
+    // while(operators[j] != NULL) {
+    //   printf("operators[%d] = %s\n", j, operators[j]);
+    //   j++;
+    // }
+
+    //int i = 0;
+    if(operators[0] != NULL && strcmp(operators[0], "|") == 0) {
+      status = shell_exec(chains, operators + 1, input_file, output_file);
+
+    } else {
+      status = shell_exec(chains, operators, input_file, output_file);
+    }
+
+
 
     //Freeing section
     input_file = NULL;
