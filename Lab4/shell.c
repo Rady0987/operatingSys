@@ -181,34 +181,22 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
         printf("Error: input and output files cannot be equal!\n");
       }
     }
-
+    
+    int i = 0;
+    while (command[i] != NULL) {
+      if (strcmp(command[i], "<") == 0 || strcmp(command[i], ">") == 0) {
+        command[i] = NULL;
+      }
+      //printf("command[%d] = %s\n", i, command[i]);
+      i++;
+    }
+    
     // int i = 0;
     // while (command[i] != NULL)
     // {
     //   printf("command[%d] = %s\n", i, command[i]);
     //   i++;
     // }
-    // printf("________________________\n");
-
-    // while (command[commandIndex] != NULL) {
-    //   if (strcmp(command[commandIndex], "<") == 0 || strcmp(command[commandIndex], ">") == 0) {
-    //     command[commandIndex] = NULL;
-    //   }
-    //   commandIndex++;
-    // }
-    // commandIndex = 0;
-
-    int i = 0;
-    while (command[i] != NULL)
-    {
-      printf("command[%d] = %s\n", i, command[i]);
-      i++;
-    }
-
-    // for (int i = 0; i < 10; i++) {
-    //   printf("%s \n", command[i]);
-    // }
-    // printf("____________________\n");
 
     //Checking the operator starting with the 2nd chain and taking into 
     //consideration the exit code of the previous command
@@ -241,25 +229,27 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
 
     if (child_pid == 0) {
 
-      // if (strcmp(operators[operatorIndex], "<") == 0 && commandIndex != 0) {
-      //   int fd0;
-      //   if ((fd0 = open(input_file, O_RDONLY, 0)) < 0) {
-      //     printf("Couldn't open input file\n");
-      //       exit(0);
-      //   }           
-      //   dup2(fd0, STDIN_FILENO);
-      //   close(fd0);
-      //   operatorIndex++;
-      // } else if (strcmp(operators[operatorIndex], ">") == 0 && commandIndex != 0) {
-      //   int fd1 = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0600);
-      //   if ((fd1 < 0)) {
-      //       perror("Couldn't open the output file\n");
-      //       exit(0);
-      //   }           
-      //   dup2(fd1, STDOUT_FILENO);
-      //   close(fd1);
-      //   operatorIndex++;
-      // }
+      if (input_file != NULL || output_file != NULL) {
+      if (strcmp(operators[operatorIndex], "<") == 0 && commandIndex != 0) {
+        int fd0;
+        if ((fd0 = open(input_file, O_RDONLY, 0)) < 0) {
+          printf("Couldn't open input file\n");
+            exit(0);
+        }           
+        dup2(fd0, STDIN_FILENO);
+        close(fd0);
+        operatorIndex++;
+      } else if (strcmp(operators[operatorIndex], ">") == 0 && commandIndex != 0) {
+        int fd1 = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+        if ((fd1 < 0)) {
+            perror("Couldn't open the output file\n");
+            exit(0);
+        }           
+        dup2(fd1, STDOUT_FILENO);
+        close(fd1);
+        operatorIndex++;
+      }
+      }
 
 
       //Command execution
