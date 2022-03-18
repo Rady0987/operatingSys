@@ -25,21 +25,6 @@ void *safeMalloc(int sz) {
   return p;
 }
 
-// void createPipe(char **args, char **operators, char **input_file, char **output_file) {
-//     int fd[2];
-//     pipe(fd);
-
-//     dup2(fd[1], 1);
-//     close(fd[1]);
-
-//     printf("args = %s\n", *args);
-
-//     shell_exec(args, operators, input_file, output_file);
-
-//     dup2(fd[0], 0);
-//     close(fd[0]);
-// }
-
 //Parsing function to split the first input line into tokens
 char **split_input_line(char *input_line, char *delimiter) {
     int buffer_size = 128, index = 0;
@@ -312,6 +297,22 @@ int shell_exec(char **chains, char **operators, char *input_file, char *output_f
   return 0;
 }
 
+int createPipe(char **args, char **operators, char *input_file, char *output_file) {
+  int fd[2], status;
+  pipe(fd);
+
+  dup2(fd[1], 1);
+  close(fd[1]);
+
+  printf("args = %s\n", *args);
+
+  status = shell_exec(args, operators, input_file, output_file);
+
+  dup2(fd[0], 0);
+  close(fd[0]);
+  return status;
+}
+
 // Function with the main loop of the shell
 void shell_loop() {
   char *input_line, *input_cpy;
@@ -331,27 +332,25 @@ void shell_loop() {
     operators = getOperators(args, &input_file, &output_file);
     //printf(" IN %s OUT %s\n", input_file, output_file);
 
-    // int i = 0;
-    // while(chains[i] != NULL) {
-    //   printf("chains[%d] = %s\n", i, chains[i]);
-    //   i++;
-    // }
+    int i = 0;
+    while(chains[i] != NULL) {
+      printf("chains[%d] = %s\n", i, chains[i]);
+      i++;
+    }
 
-    // int j = 0;
-    // while(operators[j] != NULL) {
-    //   printf("operators[%d] = %s\n", j, operators[j]);
-    //   j++;
-    // }
+    int j = 0;
+    while(operators[j] != NULL) {
+      printf("operators[%d] = %s\n", j, operators[j]);
+      j++;
+    }
 
     //int i = 0;
     if(operators[0] != NULL && strcmp(operators[0], "|") == 0) {
-      status = shell_exec(chains, operators + 1, input_file, output_file);
+      status = createPipe(chains, operators + 1, input_file, output_file);
 
     } else {
       status = shell_exec(chains, operators, input_file, output_file);
     }
-
-
 
     //Freeing section
     input_file = NULL;
