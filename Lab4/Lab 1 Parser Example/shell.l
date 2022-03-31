@@ -11,8 +11,17 @@
 /* Here we enter a section that is copied verbatim to the output */
 %{
 // Headers for use in this file
+extern "C" int yylex();
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+vector<vector<string>> chains;
+vector<string> command;
+vector<string> operators;
 
 //////////// Here you can put some helper functions and code, but make sure to properly
 //////////// separate your code in logical "entities" in different files! This helps
@@ -66,7 +75,7 @@
                         // Make sure to copy it!
                         printf("STRING: %s\n", yytext);
 
-                        //////////// Put your code here!
+                        command.push_back(yytext);
                     }
 
     /* Here we have cases for error handling - when we have encountered an invalid syntax,
@@ -85,28 +94,78 @@
                          * use REJECT to let flex continue to the next match (as a string,
                          * later on). */
 
-                        //////////// Put your code here!
+                        if(!command.empty()) {
+                            cout << "adaugam comanda asta : \n";
+                            for (int i = 0; i < command.size(); i++) {
+                                cout << command[i] << " ";
+                            }
+                            cout << "\n";
+                            chains.push_back(command);
+                            command.clear();
+                        }
 
-                        REJECT;
+                        command.push_back("exit");
+                        chains.push_back(command);
                     }
+"cd"                {
+                        command.push_back("cd");
+                        // REJECT;
+                    } 
 
     /* Other grammar parts */
 "\""                BEGIN(string); /* We start reading a string until the next " char */
 "&&"                {
                         printf("Performing &&\n");
 
-                        //////////// Put your code here!
+                            cout << "adaugam comanda asta :\n";
+                            for (int i = 0; i < command.size(); i++) {
+                                cout << command[i] << " ";
+                            }
+                            cout << "\n";
+
+                        chains.push_back(command);
+                        operators.push_back("&&");
+                        command.clear();
                     }
+
+"&"                 {
+                        printf("Performing &\n");
+
+                        chains.push_back(command);
+                        operators.push_back("&");
+                        command.clear();
+                    }   
+
 "||"                {
                         printf("Performing ||\n");
 
-                        //////////// Put your code here!
+                        chains.push_back(command);
+                        operators.push_back("||");
+                        command.clear();
+                        
                     }
+
+"|"                 {
+                        chains.push_back(command);
+                        command.clear();
+                        operators.push_back("|");
+                    }
+
 ;                   { 
                         printf("Performing ;\n");
-
-                        //////////// Put your code here!
+                        
+                        cout << "adaugam comanda asta : \n";
+                        for (int i = 0; i < command.size(); i++) {
+                            cout << command[i] << " ";
+                        }
+                        cout << "\n";
+                        chains.push_back(command);
+                        command.clear();
+                        
+                        operators.push_back(";");
+                        
                     }
+
 \n                  {
                         printf("Performing \\n\n");
 
@@ -122,10 +181,19 @@
                         // Entire string value is available in yytext with length yyleng
                         // Make sure to copy it!
                         printf("WORD: %s\n", yytext);
-
-                        //////////// Put your code here!
+                        command.push_back(yytext);
+                        
                     }
 <<EOF>>             {
+                        if(!command.empty()) {
+                            // cout << "adaugam comanda asta : \n";
+                            // for (int i = 0; i < command.size(); i++) {
+                            //     cout << command[i] << " ";
+                            // }
+                            // cout << "\n";
+                            chains.push_back(command);
+                            command.clear();
+                        }
                         /* At EOF we should unconditionally terminate! */
                         yyterminate();
                     }
@@ -150,6 +218,18 @@ int main() {
     // Start parsing process
     yylex();
 
+    for (int i = 0; i < chains.size(); i++) {
+        for (int j = 0; j < chains[i].size(); j++){
+            cout << chains[i][j] << ", ";
+            if (j == chains[i].size() - 1)
+                cout << "|";
+        }
+    }
+    cout << "\n";
+
+    for (int i = 0; i < operators.size(); i++) {
+        cout << operators[i] << " ";
+    }   
     // Cleanup
     fclose(yyin);
     yylex_destroy();

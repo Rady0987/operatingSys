@@ -3,7 +3,7 @@
 # code you might have into a single final executable.
 
 all: lex.yy.c
-	gcc lex.yy.c -lfl -o shell
+	g++ lex.yy.c -std=c++17 -lfl -o shell
 
 lex.yy.c: shell.l
 	flex -o lex.yy.c shell.l
