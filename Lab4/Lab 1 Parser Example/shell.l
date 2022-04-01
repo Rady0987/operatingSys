@@ -74,6 +74,11 @@ vector<string> operators;
 
                         command.push_back(yytext);
                     }
+<string><<EOF>>     {
+                      printf("Error: invalid syntax!\n");
+                      command.clear();
+                      BEGIN(INITIAL);
+                    }
 
     /* Here we have cases for error handling - when we have encountered an invalid syntax,
      * we want to discard the entire line so we continue until the next newline symbol. */
@@ -90,86 +95,82 @@ vector<string> operators;
                          * here if you are sure that it is safe and valid to do so, otherwise
                          * use REJECT to let flex continue to the next match (as a string,
                          * later on). */
+                        
+                        exitFlag = 0;
 
-                        // if(!command.empty()) {
-                        //     // cout << "adaugam comanda asta : \n";
-                        //     // for (int i = 0; i < command.size(); i++) {
-                        //     //     cout << command[i] << " ";
-                        //     // }
-                        //     cout << "\n";
-                        //     chains.push_back(command);
-                        //     command.clear();
-                        // } 
+                        if(command.empty() == false) {
+                            chains.push_back(command);
+                            command.clear();
+                        } 
 
                         command.push_back("exit");
                         chains.push_back(command);
+                        //printf("executare din exit\n");
+                        prepareForExec(chains, operators);
                         command.clear();
-                        yyterminate();
+                        operators.clear();
+                        chains.clear();
+
+
+                        if (exitFlag == 1) {
+                            yyterminate();
+                        } 
                     }
 "cd"                {
                         command.push_back("cd");
-                        // REJECT;
                     } 
-
     /* Other grammar parts */
 "\""                BEGIN(string); /* We start reading a string until the next " char */
 "&&"                {
-                        //printf("Performing &&\n");
-
-                            // cout << "adaugam comanda asta :\n";
-                            // for (int i = 0; i < command.size(); i++) {
-                            //     cout << command[i] << " ";
-                            // }
-                            // cout << "\n";
-
                         chains.push_back(command);
                         operators.push_back("&&");
                         command.clear();
                     }
 
 "&"                 {
-                       //printf("Performing &\n");
-
                         chains.push_back(command);
                         operators.push_back("&");
                         command.clear();
                     }   
 
 "||"                {
-                        //printf("Performing ||\n");
-
                         chains.push_back(command);
                         operators.push_back("||");
                         command.clear();
-                        
                     }
 
 "|"                 {
                         chains.push_back(command);
-                        command.clear();
                         operators.push_back("|");
+                        command.clear();
                     }
 
 ;                   { 
-                        //printf("Performing ;\n");
-                        
-                        // cout << "adaugam comanda asta : \n";
-                        // for (int i = 0; i < command.size(); i++) {
-                        //     cout << command[i] << " ";
-                        // }
-                        // cout << "\n";
+
                         chains.push_back(command);
-                        command.clear();
-                        
                         operators.push_back(";");
-                        
+                        //printf("executare din ;\n");
+                        prepareForExec(chains, operators);
+                        command.clear();
+                        operators.clear();
+                        chains.clear();
                     }
 
 \n                  {
-                        //printf("Performing \\n\n");
+                        if(!command.empty()) {
+                            chains.push_back(command);
+                            operators.push_back("\n");
+                            //printf("executare din newline\n");
+                            prepareForExec(chains, operators);
+                            command.clear();
+                            chains.clear();
+                            operators.clear();
+                        }
 
-                        chains.push_back(command);
-                        command.clear();
+                        if(chains.size() == operators.size() && operators.back().compare("&") == 0) {
+                            // sleep 10 & echo 133333 & test case ???    
+                            BEGIN(INITIAL);
+                        }
                     }
 [ \t]+              /* Ignore whitespace */
 [^ ;\t\n\"\^|]+     {
@@ -178,9 +179,6 @@ vector<string> operators;
                          * or store this as an option, or it is a filename, depending on the
                          * current state! */
 
-                        // Entire string value is available in yytext with length yyleng
-                        // Make sure to copy it!
-                        // printf("WORD: %s\n", yytext);
                         command.push_back(yytext);
                         
                     }
@@ -192,7 +190,11 @@ vector<string> operators;
                             // }
                             // cout << "\n";
                             chains.push_back(command);
+                            //printf("executare din EOF\n");
+                            prepareForExec(chains, operators);
                             command.clear();
+                            chains.clear();
+                            operators.clear();
                         }
                         /* At EOF we should unconditionally terminate! */
                         yyterminate();
@@ -231,7 +233,7 @@ int main() {
     //     cout << operators[i] << " ";
     // }   
 
-    prepareForExec(chains, operators);
+    //prepareForExec(chains, operators);
 
     // Cleanup
     fclose(yyin);
