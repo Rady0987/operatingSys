@@ -483,13 +483,10 @@ char *yytext;
 /* Here we enter a section that is copied verbatim to the output */
 #line 13 "shell.l"
 // Headers for use in this file
-extern "C" int yylex();
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <vector>
-#include <string>
 using namespace std;
+
+#include "functions.h"
+extern "C" int yylex();
 
 vector<vector<string>> chains;
 vector<string> command;
@@ -499,7 +496,7 @@ vector<string> operators;
 //////////// separate your code in logical "entities" in different files! This helps
 //////////// us grade your code as well.
 
-#line 503 "lex.yy.c"
+#line 500 "lex.yy.c"
 /**
  * Parsing in flex is done based on a series of regexes. Below, we list these regexes
  * in order, flex will try to match the input with these in order. As soon as any regex
@@ -523,7 +520,7 @@ vector<string> operators;
 
 /* Here we inform flex to not "look ahead" in stdin beyond what is necessary, to prevent
  * issues with passing stdin to another executable. */
-#line 527 "lex.yy.c"
+#line 524 "lex.yy.c"
 
 #define INITIAL 0
 #define string 1
@@ -748,16 +745,16 @@ YY_DECL
 		}
 
 	{
-#line 59 "shell.l"
+#line 56 "shell.l"
 
-#line 61 "shell.l"
+#line 58 "shell.l"
     /* From here on, comments must be indented! */
 
     /* Here we start with the rules. The highest priority rules are those to accept any
      * symbol when we are reading a string (so in the STRING context). */
     
     /* The first rule is to match the closing " char */
-#line 761 "lex.yy.c"
+#line 758 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -821,14 +818,14 @@ do_action:	/* This label is used only to access EOF actions. */
 	{ /* beginning of action switch */
 case 1:
 YY_RULE_SETUP
-#line 67 "shell.l"
+#line 64 "shell.l"
 BEGIN(INITIAL); /* Return to normal parsing */
 	YY_BREAK
 /* The second rule takes the longest string of characters not being " */
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 70 "shell.l"
+#line 67 "shell.l"
 {
                         /* Here we match any entire string. We should either make this
                          * the command to execute, or store this as an option, or it is
@@ -836,7 +833,7 @@ YY_RULE_SETUP
 
                         // Entire string value is available in yytext with length yyleng
                         // Make sure to copy it!
-                        printf("STRING: %s\n", yytext);
+                        //printf("STRING: %s\n", yytext);
 
                         command.push_back(yytext);
                     }
@@ -846,19 +843,19 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 84 "shell.l"
+#line 81 "shell.l"
 BEGIN(INITIAL); /* Return to normal parsing */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 85 "shell.l"
+#line 82 "shell.l"
 
 	YY_BREAK
 /* From here on, we have only "normal" rules for our parsing */
 /* Built-in commands */
 case 5:
 YY_RULE_SETUP
-#line 90 "shell.l"
+#line 87 "shell.l"
 {
                         /* For built-in command names, make sure that we are not currently
                          * parsing options or some other place where we cannot reasonably
@@ -867,23 +864,25 @@ YY_RULE_SETUP
                          * use REJECT to let flex continue to the next match (as a string,
                          * later on). */
 
-                        if(!command.empty()) {
-                            cout << "adaugam comanda asta : \n";
-                            for (int i = 0; i < command.size(); i++) {
-                                cout << command[i] << " ";
-                            }
-                            cout << "\n";
-                            chains.push_back(command);
-                            command.clear();
-                        }
+                        // if(!command.empty()) {
+                        //     // cout << "adaugam comanda asta : \n";
+                        //     // for (int i = 0; i < command.size(); i++) {
+                        //     //     cout << command[i] << " ";
+                        //     // }
+                        //     cout << "\n";
+                        //     chains.push_back(command);
+                        //     command.clear();
+                        // } 
 
                         command.push_back("exit");
                         chains.push_back(command);
+                        command.clear();
+                        yyterminate();
                     }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 111 "shell.l"
+#line 110 "shell.l"
 {
                         command.push_back("cd");
                         // REJECT;
@@ -892,20 +891,20 @@ YY_RULE_SETUP
 /* Other grammar parts */
 case 7:
 YY_RULE_SETUP
-#line 117 "shell.l"
+#line 116 "shell.l"
 BEGIN(string); /* We start reading a string until the next " char */
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 118 "shell.l"
+#line 117 "shell.l"
 {
-                        printf("Performing &&\n");
+                        //printf("Performing &&\n");
 
-                            cout << "adaugam comanda asta :\n";
-                            for (int i = 0; i < command.size(); i++) {
-                                cout << command[i] << " ";
-                            }
-                            cout << "\n";
+                            // cout << "adaugam comanda asta :\n";
+                            // for (int i = 0; i < command.size(); i++) {
+                            //     cout << command[i] << " ";
+                            // }
+                            // cout << "\n";
 
                         chains.push_back(command);
                         operators.push_back("&&");
@@ -914,9 +913,9 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 132 "shell.l"
+#line 131 "shell.l"
 {
-                        printf("Performing &\n");
+                       //printf("Performing &\n");
 
                         chains.push_back(command);
                         operators.push_back("&");
@@ -925,9 +924,9 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 140 "shell.l"
+#line 139 "shell.l"
 {
-                        printf("Performing ||\n");
+                        //printf("Performing ||\n");
 
                         chains.push_back(command);
                         operators.push_back("||");
@@ -937,7 +936,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 149 "shell.l"
+#line 148 "shell.l"
 {
                         chains.push_back(command);
                         command.clear();
@@ -946,15 +945,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 155 "shell.l"
+#line 154 "shell.l"
 { 
-                        printf("Performing ;\n");
+                        //printf("Performing ;\n");
                         
-                        cout << "adaugam comanda asta : \n";
-                        for (int i = 0; i < command.size(); i++) {
-                            cout << command[i] << " ";
-                        }
-                        cout << "\n";
+                        // cout << "adaugam comanda asta : \n";
+                        // for (int i = 0; i < command.size(); i++) {
+                        //     cout << command[i] << " ";
+                        // }
+                        // cout << "\n";
                         chains.push_back(command);
                         command.clear();
                         
@@ -965,11 +964,12 @@ YY_RULE_SETUP
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 170 "shell.l"
+#line 169 "shell.l"
 {
-                        printf("Performing \\n\n");
+                        //printf("Performing \\n\n");
 
-                        //////////// Put your code here!
+                        chains.push_back(command);
+                        command.clear();
                     }
 	YY_BREAK
 case 14:
@@ -988,7 +988,7 @@ YY_RULE_SETUP
 
                         // Entire string value is available in yytext with length yyleng
                         // Make sure to copy it!
-                        printf("WORD: %s\n", yytext);
+                        // printf("WORD: %s\n", yytext);
                         command.push_back(yytext);
                         
                     }
@@ -2017,18 +2017,21 @@ int main() {
     // Start parsing process
     yylex();
 
-    for (int i = 0; i < chains.size(); i++) {
-        for (int j = 0; j < chains[i].size(); j++){
-            cout << chains[i][j] << ", ";
-            if (j == chains[i].size() - 1)
-                cout << "|";
-        }
-    }
-    cout << "\n";
+    // for (int i = 0; i < chains.size(); i++) {
+    //     for (int j = 0; j < chains[i].size(); j++){
+    //         cout << chains[i][j] << ", ";
+    //         if (j == chains[i].size() - 1)
+    //             cout << "|";
+    //     }
+    // }
+    // cout << "\n";
 
-    for (int i = 0; i < operators.size(); i++) {
-        cout << operators[i] << " ";
-    }   
+    // for (int i = 0; i < operators.size(); i++) {
+    //     cout << operators[i] << " ";
+    // }   
+
+    prepareForExec(chains, operators);
+
     // Cleanup
     fclose(yyin);
     yylex_destroy();

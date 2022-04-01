@@ -11,13 +11,10 @@
 /* Here we enter a section that is copied verbatim to the output */
 %{
 // Headers for use in this file
-extern "C" int yylex();
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <vector>
-#include <string>
 using namespace std;
+
+#include "functions.h"
+extern "C" int yylex();
 
 vector<vector<string>> chains;
 vector<string> command;
@@ -73,7 +70,7 @@ vector<string> operators;
 
                         // Entire string value is available in yytext with length yyleng
                         // Make sure to copy it!
-                        printf("STRING: %s\n", yytext);
+                        //printf("STRING: %s\n", yytext);
 
                         command.push_back(yytext);
                     }
@@ -94,18 +91,20 @@ vector<string> operators;
                          * use REJECT to let flex continue to the next match (as a string,
                          * later on). */
 
-                        if(!command.empty()) {
-                            cout << "adaugam comanda asta : \n";
-                            for (int i = 0; i < command.size(); i++) {
-                                cout << command[i] << " ";
-                            }
-                            cout << "\n";
-                            chains.push_back(command);
-                            command.clear();
-                        }
+                        // if(!command.empty()) {
+                        //     // cout << "adaugam comanda asta : \n";
+                        //     // for (int i = 0; i < command.size(); i++) {
+                        //     //     cout << command[i] << " ";
+                        //     // }
+                        //     cout << "\n";
+                        //     chains.push_back(command);
+                        //     command.clear();
+                        // } 
 
                         command.push_back("exit");
                         chains.push_back(command);
+                        command.clear();
+                        yyterminate();
                     }
 "cd"                {
                         command.push_back("cd");
@@ -115,13 +114,13 @@ vector<string> operators;
     /* Other grammar parts */
 "\""                BEGIN(string); /* We start reading a string until the next " char */
 "&&"                {
-                        printf("Performing &&\n");
+                        //printf("Performing &&\n");
 
-                            cout << "adaugam comanda asta :\n";
-                            for (int i = 0; i < command.size(); i++) {
-                                cout << command[i] << " ";
-                            }
-                            cout << "\n";
+                            // cout << "adaugam comanda asta :\n";
+                            // for (int i = 0; i < command.size(); i++) {
+                            //     cout << command[i] << " ";
+                            // }
+                            // cout << "\n";
 
                         chains.push_back(command);
                         operators.push_back("&&");
@@ -129,7 +128,7 @@ vector<string> operators;
                     }
 
 "&"                 {
-                        printf("Performing &\n");
+                       //printf("Performing &\n");
 
                         chains.push_back(command);
                         operators.push_back("&");
@@ -137,7 +136,7 @@ vector<string> operators;
                     }   
 
 "||"                {
-                        printf("Performing ||\n");
+                        //printf("Performing ||\n");
 
                         chains.push_back(command);
                         operators.push_back("||");
@@ -152,13 +151,13 @@ vector<string> operators;
                     }
 
 ;                   { 
-                        printf("Performing ;\n");
+                        //printf("Performing ;\n");
                         
-                        cout << "adaugam comanda asta : \n";
-                        for (int i = 0; i < command.size(); i++) {
-                            cout << command[i] << " ";
-                        }
-                        cout << "\n";
+                        // cout << "adaugam comanda asta : \n";
+                        // for (int i = 0; i < command.size(); i++) {
+                        //     cout << command[i] << " ";
+                        // }
+                        // cout << "\n";
                         chains.push_back(command);
                         command.clear();
                         
@@ -167,9 +166,10 @@ vector<string> operators;
                     }
 
 \n                  {
-                        printf("Performing \\n\n");
+                        //printf("Performing \\n\n");
 
-                        //////////// Put your code here!
+                        chains.push_back(command);
+                        command.clear();
                     }
 [ \t]+              /* Ignore whitespace */
 [^ ;\t\n\"\^|]+     {
@@ -180,7 +180,7 @@ vector<string> operators;
 
                         // Entire string value is available in yytext with length yyleng
                         // Make sure to copy it!
-                        printf("WORD: %s\n", yytext);
+                        // printf("WORD: %s\n", yytext);
                         command.push_back(yytext);
                         
                     }
@@ -218,18 +218,21 @@ int main() {
     // Start parsing process
     yylex();
 
-    for (int i = 0; i < chains.size(); i++) {
-        for (int j = 0; j < chains[i].size(); j++){
-            cout << chains[i][j] << ", ";
-            if (j == chains[i].size() - 1)
-                cout << "|";
-        }
-    }
-    cout << "\n";
+    // for (int i = 0; i < chains.size(); i++) {
+    //     for (int j = 0; j < chains[i].size(); j++){
+    //         cout << chains[i][j] << ", ";
+    //         if (j == chains[i].size() - 1)
+    //             cout << "|";
+    //     }
+    // }
+    // cout << "\n";
 
-    for (int i = 0; i < operators.size(); i++) {
-        cout << operators[i] << " ";
-    }   
+    // for (int i = 0; i < operators.size(); i++) {
+    //     cout << operators[i] << " ";
+    // }   
+
+    prepareForExec(chains, operators);
+
     // Cleanup
     fclose(yyin);
     yylex_destroy();
