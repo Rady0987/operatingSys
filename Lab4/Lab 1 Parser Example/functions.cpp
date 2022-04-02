@@ -82,14 +82,14 @@ int shell_exec(vector<string> command, string input_file, string output_file) {
       printf("Forking failed");
 
     } else {
-      // Parent process waiting for the child process to finish.
+      Parent process waiting for the child process to finish.
       do {
         w = waitpid(child_pid, &status, WUNTRACED);
         if (w == -1) {
           perror("waitpid");
           exit(EXIT_FAILURE);
         }
-      } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+      } while (child_pid == 0);
     }
     dup2(defaultOut, 1);
     close(defaultOut);
@@ -294,38 +294,22 @@ int checkIndexes(string str) {
   for (int i = 0; i < str.size(); i++) {
     if (isdigit(str[i]) == 0) {
       return 0;
-      }
+    }
   }
   return 1;
 }
 
 // Function that handles the built-in kill comand : kill {idx} {SIGTERM}
-int handleKill(vector<string> chain) {
-
-  //If we have an index, and our index is a number
-  if (!chain[1].empty() && checkIndexes(chain[1])) {
-    int pidExist = 0; // Variable that checks if the index is valid.
-		for (int i = 0; i < backProcesses.size(); i++) {
-      if (stoi(chain[1] == backProcesses[i].arbitraryPid)) {
-        kill(backProcesses[i].pid, SIGTERM);
-        pidExist = 1; // We have found such id in our background processes.
-        break;
-			}
-		}
-    if (pidExist == 0) {
-      printf("Error: this index is not a background process!\n");
-      return 1;
-    }
-	} 
+int killCommand(vector<string> chain) {
 
   // We have an signal, but this signal is invalid (not an int).
-  if (!chain[2].empty() && !checkIndexes(chain[2])) {
+  if (chain.size() > 2 && !checkIndexes(chain[2])) {
     printf("Error: invalid signal provided!\n");
     return 1;
   }
 
   // We have an index, but this index is not a number
-  if (!chain[1].empty() && !checkIndexes(chain[1])) {
+  if (chain.size() > 1 && !checkIndexes(chain[1])) {
     printf("Error: invalid index provided!\n");
 		return 1;
 	}
@@ -335,6 +319,26 @@ int handleKill(vector<string> chain) {
     printf("Error: command requires an index!\n");
 		return 1;
 	}
+
+  //If we have an index, and our index is a number
+  if (chain.size() > 1 && checkIndexes(chain[1])) {
+    int pidExist = 0; // Variable that checks if the index is valid.
+		for (int i = 0; i < backProcesses.size(); i++) {
+      if (stoi(chain[1]) == backProcesses[i].arbitraryPid) {
+        if(chain.size() > 2) {
+          kill(backProcesses[i].pid, stoi(chain[2]));
+        } else {
+          kill(backProcesses[i].pid, SIGTERM);
+        }
+        pidExist = 1; // We have found such id in our background processes.
+        break;
+			}
+		}
+    if (pidExist == 0) {
+      printf("Error: this index is not a background process!\n");
+      return 1;
+    }
+	} 
 	return 0;
 }
 
@@ -423,7 +427,6 @@ void prepareForExec(vector<vector<string>> chains, vector<string> operators) {
         commandToPipe.push_back(chains[j]);
       } else if (operators[operatorIndex].compare("&") == 0) {
         isPipe = 2;
-
       }
     }
 
@@ -433,7 +436,11 @@ void prepareForExec(vector<vector<string>> chains, vector<string> operators) {
 
     //Handling the exit command
     if (chains[j].size() > 0 && chains[j][0].compare("exit") == 0) {
-      exitFlag = 1;
+      if (!backProcesses.empty()) {
+        printf("Error: there are still background processes running!\n");
+      } else {
+        exitFlag = 1;
+      }
       return;
     }
 
@@ -445,7 +452,7 @@ void prepareForExec(vector<vector<string>> chains, vector<string> operators) {
 
     //Handling the kill command
     if (chains[j].size() > 0 && chains[j][0].compare("kill") == 0) {
-      if (handleKill(chains[j], j) == 1)
+      if (killCommand(chains[j]) == 1)
         break;
       continue;
     }

@@ -850,19 +850,12 @@ YY_RULE_SETUP
                         
                         exitFlag = 0;
 
-                        if(command.empty() == false) {
-                            chains.push_back(command);
-                            command.clear();
-                        } 
-
                         command.push_back("exit");
                         chains.push_back(command);
-                        //printf("executare din exit\n");
                         prepareForExec(chains, operators);
                         command.clear();
                         operators.clear();
                         chains.clear();
-
 
                         if (exitFlag == 1) {
                             yyterminate();
@@ -871,7 +864,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 120 "shell.l"
+#line 113 "shell.l"
 {
                         command.push_back("cd");
                     } 
@@ -879,12 +872,12 @@ YY_RULE_SETUP
 /* Other grammar parts */
 case 7:
 YY_RULE_SETUP
-#line 124 "shell.l"
+#line 117 "shell.l"
 BEGIN(string); /* We start reading a string until the next " char */
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 125 "shell.l"
+#line 118 "shell.l"
 {
                         chains.push_back(command);
                         operators.push_back("&&");
@@ -893,7 +886,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 131 "shell.l"
+#line 124 "shell.l"
 {
                         chains.push_back(command);
                         operators.push_back("&");
@@ -902,7 +895,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 137 "shell.l"
+#line 130 "shell.l"
 {
                         chains.push_back(command);
                         operators.push_back("||");
@@ -911,7 +904,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 143 "shell.l"
+#line 136 "shell.l"
 {
                         chains.push_back(command);
                         operators.push_back("|");
@@ -920,7 +913,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 149 "shell.l"
+#line 142 "shell.l"
 { 
 
                         chains.push_back(command);
@@ -935,7 +928,7 @@ YY_RULE_SETUP
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 160 "shell.l"
+#line 153 "shell.l"
 {
                         if(!command.empty()) {
                             chains.push_back(command);
@@ -947,20 +940,19 @@ YY_RULE_SETUP
                             operators.clear();
                         }
 
-                        if(chains.size() == operators.size() && operators.back().compare("&") == 0) {
-                            // sleep 10 & echo 133333 & test case ???    
+                        if(chains.size() != 0 && chains.size() == operators.size() && operators.back().compare("&") == 0) {   
                             BEGIN(INITIAL);
                         }
                     }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 176 "shell.l"
+#line 168 "shell.l"
 /* Ignore whitespace */
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 177 "shell.l"
+#line 169 "shell.l"
 {
                         /* Here we match any sequence of characters without whitespace as a
                          * "word" or so. We should either make this the command to execute,
@@ -973,7 +965,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(error):
-#line 186 "shell.l"
+#line 178 "shell.l"
 {
                         if(!command.empty()) {
                             // cout << "adaugam comanda asta : \n";
@@ -994,7 +986,7 @@ case YY_STATE_EOF(error):
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 203 "shell.l"
+#line 195 "shell.l"
 {
                         /* Error: unknown character! (probably doesn't happen) */
                         fprintf(stdout, "Unrecognized character: %s\n", yytext );
@@ -1003,10 +995,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 209 "shell.l"
+#line 201 "shell.l"
 ECHO;
 	YY_BREAK
-#line 1010 "lex.yy.c"
+#line 1002 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2009,7 +2001,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 209 "shell.l"
+#line 201 "shell.l"
 
 
 /* All code after the second pair of %% is just plain C where you typically

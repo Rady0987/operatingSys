@@ -98,19 +98,12 @@ vector<string> operators;
                         
                         exitFlag = 0;
 
-                        if(command.empty() == false) {
-                            chains.push_back(command);
-                            command.clear();
-                        } 
-
                         command.push_back("exit");
                         chains.push_back(command);
-                        //printf("executare din exit\n");
                         prepareForExec(chains, operators);
                         command.clear();
                         operators.clear();
                         chains.clear();
-
 
                         if (exitFlag == 1) {
                             yyterminate();
@@ -167,8 +160,7 @@ vector<string> operators;
                             operators.clear();
                         }
 
-                        if(chains.size() == operators.size() && operators.back().compare("&") == 0) {
-                            // sleep 10 & echo 133333 & test case ???    
+                        if(chains.size() != 0 && chains.size() == operators.size() && operators.back().compare("&") == 0) {   
                             BEGIN(INITIAL);
                         }
                     }
