@@ -296,39 +296,39 @@ bool isNumber(string s) {
     return true;
 }
 
-int handleKill(vector<string> parsedLine, int &i) {
-	if (parsedLine.size() - i != 1 && isNumber(parsedLine[i+1])) { //check if we have kill and a pid that is a number
+int handleKill(vector<string> chain, int &i) {
+	if (chain.size() - i != 1 && isNumber(chain[i+1])) { //check if we have kill and a pid that is a number
 		bool check = true; //check if pid actually exists; if this is not set to false, we print an error later on
 		i++;
 		for (int j = backProcesses.size() - 1; j >= 0; j--) { //go over bg processes and close if we find match
-			if (backProcesses[j].arbitraryPid == stoi(parsedLine[i])) {
+			if (backProcesses[j].arbitraryPid == stoi(chain[i])) {
 				kill(backProcesses[j].pid, SIGTERM);
 				check = false;
 				break;
 			}
 		}
 		if (check) cout << "Error: this index is not a background process!" << endl; 
-	} else if (parsedLine.size() - i == 1) { //we only have kill, no pid
+	} else if (chain.size() - i == 1) { //we only have kill, no pid
 		cout << "Error: command requires an index!" << endl;
-		parsedLine.clear();
+		chain.clear();
 		return 1;
-	} else if (parsedLine.size()-i != 1 && !isNumber(parsedLine[i+1])) { //we have a pid, but it is not a number
+	} else if (chain.size()-i != 1 && !isNumber(chain[i+1])) { //we have a pid, but it is not a number
 		cout << "Error: invalid index provided!" << endl;
-		parsedLine.clear();
+		chain.clear();
 		return 1;
 	}
 	return 0;
 }
 
-void endBackgroundProcess(int sig, siginfo_t *signalInfo, void *uap) {
+void endBackgroundProcess(int signalVal, siginfo_t *signalInfo, void *u) {
   int status;
-  pid_t executing = waitpid(signalInfo->si_pid, &status, WNOHANG); 
-  if (executing == signalInfo->si_pid) { 
+
+  if (signalInfo->si_pid == waitpid(signalInfo->si_pid, &status, WNOHANG)) { 
 	  kill(signalInfo->si_pid, SIGTERM);
 	  waitpid(signalInfo->si_pid, &status, 0);
 	  for (int i = 0; i < backProcesses.size(); i++) {
 	  	if (backProcesses[i].pid == signalInfo->si_pid) 
-        backProcesses.erase(remove(backProcesses.begin(), backProcesses.end(), signalInfo->si_pid), backProcesses.end());
+        backProcesses.erase(backProcesses.begin() + i);
 	  }
 	}
 }
