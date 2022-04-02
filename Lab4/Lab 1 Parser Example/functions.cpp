@@ -250,7 +250,7 @@ void createBackground(vector<string> command, string output_file) {
 
   child_pid = fork();
 
-  if (child_pid != 0) { //create custom pid object and push to bg vector
+  if (child_pid != 0) {
       struct childPID c;
       c.pid = child_pid;
       c.arbitraryPid = pidCounter;
@@ -288,33 +288,51 @@ void createBackground(vector<string> command, string output_file) {
   }
 }
 
-//checks if a string only contains numbers (and thus can be represented as an int)
-bool isNumber(string s) {
-    for (int i = 0; i < s.size(); i++) {
-        if (isdigit(s[i]) == 0) return false;
-    }
-    return true;
+
+// Function used to check if the index given to the kill command is a number.
+int checkIndexes(string str) {
+  for (int i = 0; i < str.size(); i++) {
+    if (isdigit(str[i]) == 0) {
+      return 0;
+      }
+  }
+  return 1;
 }
 
-int handleKill(vector<string> chain, int &i) {
-	if (chain.size() - i != 1 && isNumber(chain[i+1])) { //check if we have kill and a pid that is a number
-		bool check = true; //check if pid actually exists; if this is not set to false, we print an error later on
-		i++;
-		for (int j = backProcesses.size() - 1; j >= 0; j--) { //go over bg processes and close if we find match
-			if (backProcesses[j].arbitraryPid == stoi(chain[i])) {
-				kill(backProcesses[j].pid, SIGTERM);
-				check = false;
-				break;
+// Function that handles the built-in kill comand : kill {idx} {SIGTERM}
+int handleKill(vector<string> chain) {
+
+  //If we have an index, and our index is a number
+  if (!chain[1].empty() && checkIndexes(chain[1])) {
+    int pidExist = 0; // Variable that checks if the index is valid.
+		for (int i = 0; i < backProcesses.size(); i++) {
+      if (stoi(chain[1] == backProcesses[i].arbitraryPid)) {
+        kill(backProcesses[i].pid, SIGTERM);
+        pidExist = 1; // We have found such id in our background processes.
+        break;
 			}
 		}
-		if (check) cout << "Error: this index is not a background process!" << endl; 
-	} else if (chain.size() - i == 1) { //we only have kill, no pid
-		cout << "Error: command requires an index!" << endl;
-		chain.clear();
+    if (pidExist == 0) {
+      printf("Error: this index is not a background process!\n");
+      return 1;
+    }
+	} 
+
+  // We have an signal, but this signal is invalid (not an int).
+  if (!chain[2].empty() && !checkIndexes(chain[2])) {
+    printf("Error: invalid signal provided!\n");
+    return 1;
+  }
+
+  // We have an index, but this index is not a number
+  if (!chain[1].empty() && !checkIndexes(chain[1])) {
+    printf("Error: invalid index provided!\n");
 		return 1;
-	} else if (chain.size()-i != 1 && !isNumber(chain[i+1])) { //we have a pid, but it is not a number
-		cout << "Error: invalid index provided!" << endl;
-		chain.clear();
+	}
+
+  // In our command string, we will have only one element which is the command "kill" itself
+  if (chain.size() == 1) { 
+    printf("Error: command requires an index!\n");
 		return 1;
 	}
 	return 0;
